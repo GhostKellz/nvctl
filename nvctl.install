@@ -1,0 +1,130 @@
+#!/bin/bash
+
+# nvctl installation script for Arch Linux
+# Maintainer: Christopher Kelley <ckelley@ghostkellz.sh>
+
+post_install() {
+    echo "==> nvctl installation complete!"
+    echo ""
+    echo "==> NVIDIA GPU Control Utility (Pure Zig Implementation)"
+    echo "    Repository: https://github.com/ghostkellz/nvctl"
+    echo "    Maintainer: Christopher Kelley <ckelley@ghostkellz.sh>"
+    echo ""
+    echo "==> Post-installation setup:"
+    echo ""
+    
+    # Check for NVIDIA driver
+    if ! lsmod | grep -q nvidia; then
+        echo "⚠️  NVIDIA driver not detected. Install with:"
+        echo "    sudo pacman -S nvidia nvidia-utils"
+        echo "    # OR for LTS kernel:"
+        echo "    sudo pacman -S nvidia-lts nvidia-utils"
+        echo ""
+    else
+        echo "✅ NVIDIA driver detected"
+    fi
+    
+    # Check for required permissions
+    echo "==> Setting up permissions:"
+    echo "   Adding current user to 'video' group for GPU access..."
+    if [ -n "$SUDO_USER" ]; then
+        usermod -a -G video "$SUDO_USER" 2>/dev/null || echo "   ⚠️  Please run: sudo usermod -a -G video \$USER"
+    else
+        echo "   ⚠️  Please run: sudo usermod -a -G video \$USER"
+    fi
+    
+    # Reload udev rules if installed
+    if [ -f /usr/lib/udev/rules.d/99-nvctl.rules ]; then
+        echo "   Reloading udev rules..."
+        udevadm control --reload-rules 2>/dev/null || true
+        udevadm trigger 2>/dev/null || true
+    fi
+    
+    echo ""
+    echo "==> Usage examples:"
+    echo "    nvctl gpu info                    # Show GPU information"
+    echo "    nvctl overclock status            # Check overclocking status"
+    echo "    nvctl display list                # List connected displays"
+    echo "    nvctl fan status                  # Show fan information"
+    echo "    nvctl drivers status              # Check driver status"
+    echo ""
+    echo "==> For help and full command list:"
+    echo "    nvctl --help"
+    echo "    nvctl <command> --help"
+    echo ""
+    echo "==> Documentation:"
+    echo "    /usr/share/doc/nvctl/README.md"
+    echo "    /usr/share/doc/nvctl/COMMANDS.md"
+    echo ""
+    
+    # Check for Wayland session
+    if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+        echo "==> Wayland detected - VRR support available for:"
+        echo "    • KDE Plasma (kwin_wayland)"
+        echo "    • GNOME (mutter)"
+        echo "    • Hyprland"
+        echo "    • Sway"
+        echo ""
+    fi
+    
+    # Check for gamescope
+    if command -v gamescope >/dev/null 2>&1; then
+        echo "✅ Gamescope detected - gaming integration available"
+        echo ""
+    fi
+    
+    echo "==> Note: Logout/login required to apply group changes"
+    echo "==> Reboot recommended after NVIDIA driver installation"
+}
+
+post_upgrade() {
+    echo "==> nvctl upgraded successfully!"
+    echo ""
+    echo "==> Changes in this version:"
+    if [ -f /usr/share/doc/nvctl/CHANGELOG.md ]; then
+        echo "    See /usr/share/doc/nvctl/CHANGELOG.md for details"
+    fi
+    echo ""
+    
+    # Reload systemd user services if they exist
+    if [ -f /usr/lib/systemd/user/nvctl.service ]; then
+        echo "==> Reloading systemd user services..."
+        systemctl --global daemon-reload 2>/dev/null || true
+    fi
+    
+    # Reload udev rules
+    if [ -f /usr/lib/udev/rules.d/99-nvctl.rules ]; then
+        echo "==> Reloading udev rules..."
+        udevadm control --reload-rules 2>/dev/null || true
+        udevadm trigger 2>/dev/null || true
+    fi
+    
+    echo "==> Run 'nvctl --version' to verify the new version"
+}
+
+pre_remove() {
+    echo "==> Preparing to remove nvctl..."
+    
+    # Stop any running nvctl processes
+    pkill -f nvctl 2>/dev/null || true
+    
+    # Disable systemd user service if it exists
+    if [ -f /usr/lib/systemd/user/nvctl.service ]; then
+        systemctl --global disable nvctl.service 2>/dev/null || true
+        systemctl --global stop nvctl.service 2>/dev/null || true
+    fi
+}
+
+post_remove() {
+    echo "==> nvctl removed"
+    echo ""
+    echo "==> Cleanup (optional):"
+    echo "    Configuration: rm -rf ~/.config/nvctl"
+    echo "    Cache data:    rm -rf ~/.cache/nvctl"
+    echo "    Runtime data:  sudo rm -rf /var/lib/nvctl"
+    echo ""
+    echo "==> Note: NVIDIA drivers were NOT removed"
+    echo "    To remove: sudo pacman -Rs nvidia nvidia-utils"
+}
+
+# vim:set ts=4 sw=4 et:

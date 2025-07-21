@@ -1,0 +1,52 @@
+# udev rules for nvctl - NVIDIA GPU control utility
+# Maintainer: Christopher Kelley <ckelley@ghostkellz.sh>
+#
+# This file provides the necessary permissions for nvctl to access
+# NVIDIA GPU hardware interfaces for monitoring and control.
+
+# NVIDIA GPU devices - allow video group access
+SUBSYSTEM=="drm", KERNEL=="card*", DRIVERS=="nvidia", GROUP="video", MODE="0664"
+SUBSYSTEM=="drm", KERNEL=="controlD*", DRIVERS=="nvidia", GROUP="video", MODE="0664"
+SUBSYSTEM=="drm", KERNEL=="renderD*", DRIVERS=="nvidia", GROUP="video", MODE="0664"
+
+# NVIDIA GPU control interfaces
+KERNEL=="nvidia*", GROUP="video", MODE="0664"
+KERNEL=="nvidiactl", GROUP="video", MODE="0664"
+KERNEL=="nvidia-modeset", GROUP="video", MODE="0664"
+KERNEL=="nvidia-uvm", GROUP="video", MODE="0664"
+KERNEL=="nvidia-uvm-tools", GROUP="video", MODE="0664"
+
+# Hardware monitoring interfaces for temperature/power/fan control
+SUBSYSTEM=="hwmon", KERNEL=="hwmon*", ATTRS{name}=="nvidia", GROUP="video", MODE="0664"
+SUBSYSTEM=="hwmon", KERNEL=="hwmon*", ATTRS{name}=="nvidia-gpu", GROUP="video", MODE="0664"
+
+# I2C interfaces for display control (DDC/CI)
+SUBSYSTEM=="i2c-dev", GROUP="video", MODE="0664"
+
+# Backlight control for laptops with NVIDIA GPUs
+SUBSYSTEM=="backlight", GROUP="video", MODE="0664"
+
+# DRM display interfaces
+SUBSYSTEM=="drm", GROUP="video", MODE="0664"
+
+# Additional NVIDIA-specific interfaces
+SUBSYSTEM=="misc", KERNEL=="nvidia-caps*", GROUP="video", MODE="0664"
+
+# Power management interfaces
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", GROUP="video", MODE="0644"
+
+# PCI configuration access for overclocking (requires root, but allow reading)
+SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", GROUP="video", MODE="0644"
+
+# NVML library access
+SUBSYSTEM=="misc", KERNEL=="nvidia-nvswitchctl", GROUP="video", MODE="0664"
+
+# Performance monitoring
+SUBSYSTEM=="misc", KERNEL=="nvidia-perf", GROUP="video", MODE="0664"
+
+# GPU memory management
+SUBSYSTEM=="misc", KERNEL=="nvidia-mem", GROUP="video", MODE="0664"
+
+# Tag for systemd to set up additional permissions
+SUBSYSTEM=="drm", KERNEL=="card*", DRIVERS=="nvidia", TAG+="uaccess"
+SUBSYSTEM=="misc", KERNEL=="nvidia*", TAG+="uaccess"

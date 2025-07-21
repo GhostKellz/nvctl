@@ -38,7 +38,7 @@
         },
         .ghostnv = .{
             .url = "https://github.com/ghostkellz/ghostnv/archive/main.tar.gz",
-            .hash = "ghostnv-0.2.0-EX5M6wPfoB3NAV8uzfQq07_rNGhuKpgZdijN_kk41oQl",
+            .hash = "ghostnv-0.2.2-EX5M62i_LCK8hmApb_7yKNncufAxdHRUqxLBTHYz3N5N",
         },
         .flash = .{
             .url = "https://github.com/ghostkellz/flash/archive/main.tar.gz",

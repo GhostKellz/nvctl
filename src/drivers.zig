@@ -286,6 +286,7 @@ fn checkLatestVersion(allocator: std.mem.Allocator, pkg_manager: PackageManager)
 }
 
 fn listAvailableDrivers(allocator: std.mem.Allocator) !void {
+    _ = allocator;
     try nvctl.utils.print.line("📦 Available NVIDIA Drivers");
     try nvctl.utils.print.line("══════════════════════════════════════════════════");
     try nvctl.utils.print.line("");

@@ -475,15 +475,15 @@ The release workflow runs on `nv-palladium` with:
   ```
 - Live GPU stats (TUI):
   ```sh
-  nvcontrol gpu stat
+  nvctl gpu stat
   ```
 - List displays:
   ```sh
-  nvcontrol display ls
+  nvctl display ls
   ```
 - Set vibrance:
   ```sh
-  nvcontrol display vibrance 512 1023
+  nvctl display vibrance 512 1023
   ```
 
 ---

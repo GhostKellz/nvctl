@@ -240,9 +240,6 @@ fn isCompositorVrrCompatible(compositor: []const u8) bool {
 
 fn enableVrrForDisplay(allocator: std.mem.Allocator, display_id: u32, min_hz: u32, max_hz: u32, compositor: []const u8) !bool {
     _ = allocator;
-    _ = display_id;
-    _ = min_hz;
-    _ = max_hz;
     
     if (std.mem.indexOf(u8, compositor, "KDE") != null) {
         return try enableVrrKDE(display_id, min_hz, max_hz);

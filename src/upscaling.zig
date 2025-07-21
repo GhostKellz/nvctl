@@ -208,7 +208,7 @@ fn handleFsrCommand(allocator: std.mem.Allocator, args: []const []const u8) !voi
     } else if (std.mem.eql(u8, fsr_cmd, "disable")) {
         try nvctl.utils.print.line("⚡ FSR disabled");
     } else {
-        try nvctl.utils.print.format("⚡ FSR status: Ready\n");
+        try nvctl.utils.print.line("⚡ FSR status: Ready");
     }
     
     _ = allocator;

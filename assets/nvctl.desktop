@@ -1,0 +1,52 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=nvctl
+GenericName=NVIDIA GPU Control
+Comment=Pure Zig NVIDIA GPU control utility using ghostnv driver
+Keywords=nvidia;gpu;graphics;control;overclock;monitor;fan;temperature;
+Exec=nvctl gpu stat
+Icon=nvctl
+Terminal=true
+Categories=System;Monitor;HardwareSettings;
+MimeType=
+StartupNotify=true
+StartupWMClass=nvctl
+
+# Localization
+Name[en_US]=nvctl - NVIDIA GPU Control
+Comment[en_US]=Pure Zig NVIDIA GPU control utility using ghostnv driver
+GenericName[en_US]=NVIDIA GPU Control
+
+# Additional metadata
+X-GNOME-UsesNotifications=false
+X-KDE-SubstituteUID=false
+X-KDE-Username=
+
+# Actions for different nvctl commands
+Actions=info;overclock;fan;display;drivers;
+
+[Desktop Action info]
+Name=GPU Information
+Exec=nvctl gpu info
+Icon=nvctl
+
+[Desktop Action overclock]
+Name=Overclocking Status
+Exec=nvctl overclock status
+Icon=nvctl
+
+[Desktop Action fan]
+Name=Fan Control
+Exec=nvctl fan status
+Icon=nvctl
+
+[Desktop Action display]
+Name=Display Management
+Exec=nvctl display list
+Icon=nvctl
+
+[Desktop Action drivers]
+Name=Driver Status
+Exec=nvctl drivers status
+Icon=nvctl

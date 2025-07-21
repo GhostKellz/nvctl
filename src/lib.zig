@@ -17,6 +17,14 @@ pub const fan = @import("fan.zig");
 pub const power = @import("power.zig");
 pub const vibrance = @import("vibrance.zig");
 
+// Gaming integration modules
+pub const gamescope = @import("gamescope.zig");
+
+// Advanced features modules
+pub const monitoring = @import("monitoring.zig");
+pub const stress_test = @import("stress_test.zig");
+pub const performance = @import("performance.zig");
+
 // GUI module (only available in non-testing builds)
 pub const gui = @import("gui.zig");
 

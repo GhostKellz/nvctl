@@ -157,8 +157,8 @@ fn applyOverclock(allocator: std.mem.Allocator, args: []const []const u8) !void 
     }
     
     // Apply settings via ghostnv (simulation)
-    try nvctl.utils.print.format("🔧 GPU Clock Offset:    {+d} MHz\n", .{gpu_offset});
-    try nvctl.utils.print.format("🔧 Memory Clock Offset: {+d} MHz\n", .{mem_offset});
+    try nvctl.utils.print.format("🔧 GPU Clock Offset:    {d} MHz\n", .{gpu_offset});
+    try nvctl.utils.print.format("🔧 Memory Clock Offset: {d} MHz\n", .{mem_offset});
     try nvctl.utils.print.format("🔧 Power Limit:         {d}%\n", .{power_limit});
     try nvctl.utils.print.line("");
     try nvctl.utils.print.line("✓ Safety validation passed");
@@ -264,8 +264,9 @@ fn runStressTest(allocator: std.mem.Allocator, args: []const []const u8) !void {
             .{ progress, gpu_info.temperature, remaining });
         
         // Sleep for interval
-        std.time.sleep(@min(check_interval, remaining) * 1000000000);
-        elapsed += @min(check_interval, remaining);
+        const sleep_seconds = @min(check_interval, remaining);
+        std.time.sleep(@as(u64, sleep_seconds) * 1000000000);
+        elapsed += sleep_seconds;
     }
     
     try nvctl.utils.print.line("");

@@ -1,13 +1,9 @@
 const std = @import("std");
-const nvctl_options = @import("nvctl_options");
 const nvctl = @import("lib.zig");
 
 pub fn launch(_: std.mem.Allocator) !void {
-    if (nvctl_options.testing) {
-        try nvctl.utils.print.line("GUI functionality not available in testing build.");
-        try nvctl.utils.print.line("Please use CLI commands instead.");
-        return;
-    }
+    // GUI implementation
+    // Note: In testing builds, the main.zig will not call this function
 
     // GUI implementation will use Jaguar framework
     // For now, show a message that GUI is not yet implemented

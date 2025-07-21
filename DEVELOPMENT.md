@@ -1,86 +1,101 @@
-# nvctl Development Status
+# nvctl Development Guide
 
-This is the Zig implementation of nvctl, built using the following dependencies:
+This document provides comprehensive information for developers working on nvctl.
 
-## Dependencies
-- **ghostnv**: Pure Zig NVIDIA driver implementation
-- **jaguar**: GUI framework (similar to egui)  
-- **flash**: CLI framework (similar to clap)
+## 🏗️ Architecture Overview
 
-## Current Implementation Status
+nvctl follows a modular architecture with clear separation of concerns, built entirely in Zig for maximum performance and safety.
 
-### ✅ Completed Features
-- **CLI Framework**: Complete command structure with subcommands
-- **GPU Monitoring**: 
-  - `nvctl gpu info` - Comprehensive GPU information
-  - `nvctl gpu stat` - Live TUI dashboard with real-time stats
-  - `nvctl gpu capabilities` - Overclocking capabilities and limits
-- **Display Management**:
-  - `nvctl display info` - Display information and capabilities
-  - `nvctl display ls` - List all connected displays
-  - `nvctl display vibrance get/set/reset` - Digital vibrance control
-  - `nvctl display hdr status/enable/disable` - HDR management
-- **Overclocking Controls**:
-  - `nvctl overclock info` - Current overclocking status
-  - `nvctl overclock apply` - Apply overclocking settings with safety checks
-  - `nvctl overclock reset` - Reset to defaults
-  - `nvctl overclock stress-test` - GPU stress testing with monitoring
+### Core Principles
 
-### 🚧 Placeholder Modules (Future Implementation)
-- **VRR Management**: Variable refresh rate control across compositors
-- **Upscaling**: DLSS/FSR/XeSS per-game profiles
-- **Driver Management**: Package manager integration
-- **Fan Control**: Manual fan curves and speed control
-- **GUI**: Jaguar-based graphical interface
+1. **Memory Safety**: Leveraging Zig's compile-time memory safety guarantees
+2. **Performance**: Zero-cost abstractions with predictable performance
+3. **Maintainability**: Clear module boundaries and comprehensive documentation
+4. **Hardware Control**: Direct hardware access via ghostnv driver integration
 
-## Build Instructions
+### System Architecture
 
-```bash
-# Standard build (CLI + GUI)
-zig build
-
-# Testing build (headless CI)
-zig build -Dtesting=true
-
-# With system tray support
-zig build -Dsystem-tray=true
-
-# Release build
-zig build -Doptimize=ReleaseFast
+```
+nvctl CLI (main.zig)
+├── Core Modules
+│   ├── gpu.zig (TUI Dashboard)
+│   ├── display.zig (VRR Management)
+│   ├── overclocking.zig (Performance Control)
+│   ├── fan.zig (Thermal Management)
+│   ├── drivers.zig (Package Management)
+│   └── gamescope.zig (Gaming Integration)
+├── Hardware Abstraction
+│   └── ghostnv_integration.zig (GPU Controller)
+└── System Interfaces
+    ├── ghostnv (Pure Zig Driver)
+    ├── phantom (TUI Framework)
+    └── Linux sysfs/hwmon/drm
 ```
 
-## Usage Examples
+## 🛠️ Development Environment
+
+### Prerequisites
+
+1. **Zig 0.15.0+**: Download from [ziglang.org](https://ziglang.org/download/)
+2. **NVIDIA GPU**: For hardware testing
+3. **Linux Distribution**: Arch, Ubuntu, or Fedora recommended
+4. **Development Tools**: git, gdb, valgrind (optional)
+
+### Setup
 
 ```bash
-# GPU monitoring
-nvctl gpu info                    # Show GPU details
-nvctl gpu stat                    # Live TUI dashboard
-nvctl gpu capabilities           # Overclocking limits
+# Clone repository with submodules
+git clone --recursive https://github.com/ghostkellz/nvctl
+cd nvctl
 
-# Display management
-nvctl display ls                  # List displays
-nvctl display vibrance set 150   # Set 150% vibrance
-nvctl display hdr status         # Check HDR status
+# Build and test
+zig build -Doptimize=Debug
+zig build test
 
-# Overclocking
-nvctl overclock info             # Current settings
-nvctl overclock apply --gpu-offset 100 --power-limit 110
-nvctl overclock stress-test 5    # 5 minute stress test
-
-# Help
-nvctl help                       # Show all commands
-nvctl gpu help                   # GPU-specific help
+# Run development version
+zig build run -- gpu info
 ```
 
-## Architecture
+## 📝 Coding Standards
 
-The application uses a modular design with separate modules for each major feature:
+### Zig Style Guidelines
 
-- `src/main.zig` - CLI parsing and dispatch
-- `src/gpu.zig` - GPU monitoring and information  
-- `src/display.zig` - Display and vibrance management
-- `src/overclocking.zig` - Overclocking controls and stress testing
-- `src/gui.zig` - GUI interface (placeholder)
-- `src/[feature].zig` - Individual feature modules
+- **Types**: `PascalCase` (GPUController, DisplayInfo)  
+- **Functions**: `camelCase` (getGpuInfo, applyOverclock)
+- **Variables**: `snake_case` (gpu_count, max_temperature)
+- **Constants**: `SCREAMING_SNAKE_CASE` (MAX_GPU_COUNT)
 
-All modules use the ghostnv driver for direct hardware communication, providing better performance and reliability than external dependencies.
+### Code Quality
+
+- Use `zig fmt` for formatting
+- Document all public APIs with `///`
+- Provide specific error types
+- Use `errdefer` for cleanup
+- Follow RAII patterns
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+zig build test
+
+# Debug build with sanitizers
+zig build -Doptimize=Debug -Dsanitize=address
+
+# Memory leak detection
+valgrind ./zig-out/bin/nvctl gpu info
+```
+
+## 🤝 Contributing
+
+1. Fork and create feature branch
+2. Follow Zig coding standards
+3. Add tests for new functionality
+4. Update documentation
+5. Submit pull request
+
+See full documentation in repository for detailed guidelines.
+
+---
+
+**Maintainer**: Christopher Kelley <ckelley@ghostkellz.sh>
