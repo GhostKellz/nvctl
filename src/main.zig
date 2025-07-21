@@ -43,6 +43,8 @@ pub fn main() !void {
         try handleDriversCommand(allocator, args[1..]);
     } else if (std.mem.eql(u8, command, "fan")) {
         try handleFanCommand(allocator, args[1..]);
+    } else if (std.mem.eql(u8, command, "power")) {
+        try handlePowerCommand(allocator, args[1..]);
     } else {
         try nvctl.utils.print.format("Unknown command: {s}\n", .{command});
         try printHelp();
@@ -61,6 +63,7 @@ fn printHelp() !void {
     try nvctl.utils.print.line("  upscaling   DLSS/FSR/XeSS configuration");
     try nvctl.utils.print.line("  drivers     Driver installation and management");
     try nvctl.utils.print.line("  fan         Fan control and monitoring");
+    try nvctl.utils.print.line("  power       Advanced power management");
     try nvctl.utils.print.line("  help        Show help information\n");
     try nvctl.utils.print.line("For more information on a specific command, run:");
     try nvctl.utils.print.line("  nvctl <COMMAND> help");
@@ -134,4 +137,14 @@ fn handleFanCommand(allocator: std.mem.Allocator, args: []const []const u8) !voi
     
     const subcommand = args[1];
     try nvctl.fan.handleCommandSimple(allocator, subcommand, args[2..]);
+}
+
+fn handlePowerCommand(allocator: std.mem.Allocator, args: []const []const u8) !void {
+    if (args.len < 2) {
+        try nvctl.power.handleCommand(allocator, null);
+        return;
+    }
+    
+    const subcommand = args[1];
+    try nvctl.power.handleCommandSimple(allocator, subcommand, args[2..]);
 }

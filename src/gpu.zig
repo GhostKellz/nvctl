@@ -96,30 +96,97 @@ fn showGpuInfo(allocator: std.mem.Allocator) !void {
 }
 
 fn showGpuStats(allocator: std.mem.Allocator) !void {
-    _ = allocator;
-    
     try nvctl.utils.print.line("🎯 Live GPU Stats Dashboard");
     try nvctl.utils.print.line("══════════════════════════════════════════════════");
     try nvctl.utils.print.line("");
-    try nvctl.utils.print.line("🚀 Launching phantom TUI dashboard...");
+    
+    // Initialize GPU controller for live stats
+    var gpu_controller = nvctl.ghostnv_integration.GPUController.init(allocator);
+    defer gpu_controller.deinit();
+    
+    try nvctl.utils.print.line("🚀 Starting live monitoring...");
+    try nvctl.utils.print.line("Press Ctrl+C to exit");
     try nvctl.utils.print.line("");
-    try nvctl.utils.print.line("This will show a live dashboard with:");
-    try nvctl.utils.print.line("• Real-time temperature monitoring with color warnings");
-    try nvctl.utils.print.line("• Fan speed (RPM and percentage) with live graphs");
-    try nvctl.utils.print.line("• VRAM usage (used/total) with percentage indicators");
-    try nvctl.utils.print.line("• GPU utilization with load indicators");
-    try nvctl.utils.print.line("• Power consumption in watts");
-    try nvctl.utils.print.line("• Clock speeds (base/boost/current)");
+    
+    // Live monitoring loop (simplified version until phantom is fully integrated)
+    var refresh_count: u32 = 0;
+    while (refresh_count < 10) { // Limit to 10 refreshes for demo
+        // Clear screen (simplified)
+        try nvctl.utils.print.line("\x1B[2J\x1B[H");
+        
+        try nvctl.utils.print.line("🎯 Live GPU Stats Dashboard (Refresh #" ++ std.fmt.comptimePrint("{d}", .{refresh_count + 1}) ++ ")");
+        try nvctl.utils.print.line("══════════════════════════════════════════════════");
+        try nvctl.utils.print.line("");
+        
+        // Get current GPU stats
+        const gpu_info = gpu_controller.getGpuInfo() catch |err| switch (err) {
+            error.OutOfMemory => return err,
+            else => {
+                try nvctl.utils.print.line("❌ Unable to get GPU stats");
+                break;
+            },
+        };
+        defer gpu_info.deinit(allocator);
+        
+        // Display live stats in a box
+        try nvctl.utils.print.line("┌─ GPU Stats ─────────────────────────────────────┐");
+        try nvctl.utils.print.format("│ 🎯 {s:<15} 🌡️ {d:>2}°C    ⚡ {d:>3}W        │\n", .{ 
+            gpu_info.name[0..@min(15, gpu_info.name.len)], 
+            gpu_info.temperature, 
+            gpu_info.power_usage 
+        });
+        
+        // GPU utilization bar
+        const util_bars = createProgressBar(allocator, gpu_info.utilization, 10) catch |err| switch (err) {
+            error.OutOfMemory => return err,
+            else => return,
+        };
+        defer allocator.free(util_bars);
+        try nvctl.utils.print.format("│ 📈 GPU: {s} {d:>2}%   💾 VRAM: Unknown        │\n", .{ util_bars, gpu_info.utilization });
+        
+        // Temperature bar
+        const temp_bars = createTempBar(allocator, gpu_info.temperature, 10) catch |err| switch (err) {
+            error.OutOfMemory => return err,
+            else => return,
+        };
+        defer allocator.free(temp_bars);
+        try nvctl.utils.print.format("│ 🌀 Fan: Unknown         🔥 Temp: {s}    │\n", .{temp_bars});
+        
+        try nvctl.utils.print.line("└─────────────────────────────────────────────────┘");
+        try nvctl.utils.print.line("");
+        try nvctl.utils.print.format("Last updated: {d} seconds ago\n", .{refresh_count});
+        
+        // Sleep for 1 second
+        std.time.sleep(1000000000);
+        refresh_count += 1;
+    }
+    
     try nvctl.utils.print.line("");
-    try nvctl.utils.print.line("📊 Example display:");
-    try nvctl.utils.print.line("┌─ GPU Stats ─────────────────────────────────────┐");
-    try nvctl.utils.print.line("│ 🎯 RTX 4090          🌡️ 72°C    ⚡ 380W        │");
-    try nvctl.utils.print.line("│ 📈 GPU: ████████░░ 85%   💾 VRAM: 18.2/24.0 GB │");
-    try nvctl.utils.print.line("│ 🌀 Fan: ██████░░░░ 65%   🔥 Temp: ████████░░    │");
-    try nvctl.utils.print.line("└─────────────────────────────────────────────────┘");
-    try nvctl.utils.print.line("");
-    try nvctl.utils.print.line("🔧 TUI implementation with phantom coming in next iteration!");
-    try nvctl.utils.print.line("Press 'q' to quit, 'r' to refresh, 'h' for help");
+    try nvctl.utils.print.line("🔧 Full phantom TUI integration coming next!");
+    try nvctl.utils.print.line("💡 Use 'nvctl gpu info' for static information");
+}
+
+fn createProgressBar(allocator: std.mem.Allocator, value: u32, width: u32) ![]u8 {
+    var bar = try allocator.alloc(u8, width);
+    const filled = @min(value * width / 100, width);
+    
+    for (0..width) |i| {
+        bar[i] = if (i < filled) '█' else '░';
+    }
+    
+    return bar;
+}
+
+fn createTempBar(allocator: std.mem.Allocator, temp: u32, width: u32) ![]u8 {
+    var bar = try allocator.alloc(u8, width);
+    const max_temp: u32 = 90; // Max safe temperature
+    const filled = @min(temp * width / max_temp, width);
+    
+    for (0..width) |i| {
+        bar[i] = if (i < filled) '█' else '░';
+    }
+    
+    return bar;
 }
 
 fn showGpuCapabilities(allocator: std.mem.Allocator) !void {

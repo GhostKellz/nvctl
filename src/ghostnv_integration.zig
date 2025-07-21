@@ -18,8 +18,12 @@ pub const GPUController = struct {
     }
     
     pub fn deinit(self: *Self) void {
-        _ = self;
-        // Cleanup ghostnv resources
+        // Cleanup ghostnv resources if driver was initialized
+        if (self.driver_initialized) {
+            // TODO: Call ghostnv cleanup functions when available
+        }
+        // Reset state
+        self.driver_initialized = false;
     }
     
     pub fn initializeDriver(self: *Self) !void {
@@ -78,16 +82,43 @@ pub const GPUController = struct {
                 
                 // Check if it's NVIDIA (0x10de)
                 if (std.mem.eql(u8, vendor_str, "0x10de")) {
+                    // Allocate all strings with proper error cleanup
+                    const name = self.getGpuName(entry.name) catch |err| switch (err) {
+                        error.OutOfMemory => return err,
+                        else => try self.allocator.dupe(u8, "NVIDIA GPU"),
+                    };
+                    errdefer self.allocator.free(name);
+                    
+                    const driver_version = self.getDriverVersion() catch |err| switch (err) {
+                        error.OutOfMemory => return err,
+                        else => try self.allocator.dupe(u8, "575.0.0-ghost (ghostnv)"),
+                    };
+                    errdefer self.allocator.free(driver_version);
+                    
+                    const architecture = try self.allocator.dupe(u8, "Unknown");
+                    errdefer self.allocator.free(architecture);
+                    
+                    const pci_id = try self.allocator.dupe(u8, vendor_str);
+                    errdefer self.allocator.free(pci_id);
+                    
+                    const compute_capability = try self.allocator.dupe(u8, "Unknown");
+                    errdefer self.allocator.free(compute_capability);
+                    
+                    const vram_total = self.getVramSize(entry.name) catch 0;
+                    const temperature = self.getTemperature() catch 0;
+                    const power_usage = self.getPowerUsage() catch 0;
+                    const utilization = self.getUtilization() catch 0;
+                    
                     return GpuInfo{
-                        .name = try self.getGpuName(entry.name),
-                        .driver_version = try self.getDriverVersion(),
-                        .architecture = try self.allocator.dupe(u8, "Unknown"),
-                        .pci_id = try self.allocator.dupe(u8, vendor_str),
-                        .vram_total = try self.getVramSize(entry.name),
-                        .compute_capability = try self.allocator.dupe(u8, "Unknown"),
-                        .temperature = try self.getTemperature(),
-                        .power_usage = try self.getPowerUsage(),
-                        .utilization = try self.getUtilization(),
+                        .name = name,
+                        .driver_version = driver_version,
+                        .architecture = architecture,
+                        .pci_id = pci_id,
+                        .vram_total = vram_total,
+                        .compute_capability = compute_capability,
+                        .temperature = temperature,
+                        .power_usage = power_usage,
+                        .utilization = utilization,
                     };
                 }
             }
@@ -236,7 +267,13 @@ pub const DisplayController = struct {
     
     fn getDisplaysFromDrm(self: *Self) ![]DisplayInfo {
         var displays = std.ArrayList(DisplayInfo).init(self.allocator);
-        errdefer displays.deinit();
+        errdefer {
+            // Clean up any partially allocated DisplayInfo structs
+            for (displays.items) |display| {
+                display.deinit(self.allocator);
+            }
+            displays.deinit();
+        }
         
         const drm_path = "/sys/class/drm";
         var dir = std.fs.cwd().openDir(drm_path, .{ .iterate = true }) catch return displays.toOwnedSlice();
@@ -246,12 +283,28 @@ pub const DisplayController = struct {
         while (try iterator.next()) |entry| {
             if (std.mem.indexOf(u8, entry.name, "-")) |_| {
                 // This is likely a connector (e.g., "card0-DP-1", "card0-HDMI-A-1")
+                // Allocate strings with proper error handling
+                const name = try self.allocator.dupe(u8, entry.name);
+                errdefer self.allocator.free(name);
+                
+                const manufacturer = try self.allocator.dupe(u8, "Unknown");
+                errdefer self.allocator.free(manufacturer);
+                
+                const model = try self.allocator.dupe(u8, "Unknown");
+                errdefer self.allocator.free(model);
+                
+                const connection_type = self.extractConnectionType(entry.name) catch |err| switch (err) {
+                    error.OutOfMemory => return err,
+                    else => try self.allocator.dupe(u8, "Unknown"),
+                };
+                errdefer self.allocator.free(connection_type);
+                
                 const display_info = DisplayInfo{
                     .id = @intCast(displays.items.len),
-                    .name = try self.allocator.dupe(u8, entry.name),
-                    .manufacturer = try self.allocator.dupe(u8, "Unknown"),
-                    .model = try self.allocator.dupe(u8, "Unknown"),
-                    .connection_type = try self.extractConnectionType(entry.name),
+                    .name = name,
+                    .manufacturer = manufacturer,
+                    .model = model,
+                    .connection_type = connection_type,
                     .resolution_width = 1920,
                     .resolution_height = 1080,
                     .refresh_rate = 60,
@@ -260,7 +313,14 @@ pub const DisplayController = struct {
                     .vibrance = 0.0,
                 };
                 
-                try displays.append(display_info);
+                displays.append(display_info) catch |err| {
+                    // Clean up on append failure
+                    self.allocator.free(name);
+                    self.allocator.free(manufacturer);
+                    self.allocator.free(model);
+                    self.allocator.free(connection_type);
+                    return err;
+                };
             }
         }
         
