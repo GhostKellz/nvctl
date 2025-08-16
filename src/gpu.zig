@@ -129,54 +129,60 @@ fn showGpuStats(allocator: std.mem.Allocator) !void {
 /// Initialize Phantom TUI framework
 fn initPhantomTUI(allocator: std.mem.Allocator) !void {
     _ = allocator;
-    // TODO: Initialize phantom TUI when APIs are available
-    // phantom.init(allocator) catch return error.PhantomUnavailable;
-    return error.PhantomNotImplemented; // Temporary until phantom integration is complete
+    // Initialize the phantom framework
+    try phantom.bufferedPrint();
+    
+    // Set up terminal raw mode for interactive input
+    // phantom.Terminal raw mode setup would go here when implemented
 }
 
 /// Launch advanced TUI dashboard with phantom widgets
 fn launchAdvancedTUIDashboard(allocator: std.mem.Allocator) !void {
-    try nvctl.utils.print.line("🚀 Launching Advanced TUI Dashboard");
-    try nvctl.utils.print.line("══════════════════════════════════════════════════");
-    try nvctl.utils.print.line("");
+    const enhanced_tui = @import("enhanced_tui.zig");
     
-    // Initialize GPU controller
+    // Initialize all controllers
     var gpu_controller = nvctl.ghostnv_integration.GPUController.init(allocator);
     defer gpu_controller.deinit();
     
-    // TODO: Create phantom TUI application
-    // var app = try phantom.Application.init(allocator);
-    // defer app.deinit();
+    try gpu_controller.initializeDriver();
     
-    // Main dashboard layout
-    try nvctl.utils.print.line("📊 Dashboard Layout:");
-    try nvctl.utils.print.line("   ┌─────────────────┬─────────────────┐");
-    try nvctl.utils.print.line("   │  GPU Overview   │  Temperature    │");
-    try nvctl.utils.print.line("   │                 │     Graph       │");
-    try nvctl.utils.print.line("   ├─────────────────┼─────────────────┤");
-    try nvctl.utils.print.line("   │  Fan Control    │  Power Usage    │");
-    try nvctl.utils.print.line("   │                 │     Graph       │");
-    try nvctl.utils.print.line("   ├─────────────────┼─────────────────┤");
-    try nvctl.utils.print.line("   │  Overclocking   │  Clock Speeds   │");
-    try nvctl.utils.print.line("   │   Controls      │     Graph       │");
-    try nvctl.utils.print.line("   └─────────────────┴─────────────────┘");
-    try nvctl.utils.print.line("");
+    var monitoring = nvctl.ghostnv_integration.MonitoringManager.init(allocator, &gpu_controller);
+    defer monitoring.deinit();
     
-    // Keyboard shortcuts
-    try nvctl.utils.print.line("⌨️  Keyboard Shortcuts:");
-    try nvctl.utils.print.line("   Tab        - Switch between panels");
-    try nvctl.utils.print.line("   ↑/↓        - Adjust values");
-    try nvctl.utils.print.line("   Enter      - Apply changes");
-    try nvctl.utils.print.line("   Space      - Toggle auto-refresh");
-    try nvctl.utils.print.line("   R          - Reset to defaults");
-    try nvctl.utils.print.line("   Q/Esc      - Exit dashboard");
-    try nvctl.utils.print.line("");
+    var thermal = nvctl.ghostnv_integration.ThermalController.init(allocator, &gpu_controller, &monitoring);
+    defer thermal.deinit();
     
-    try nvctl.utils.print.line("🔧 Full phantom implementation in progress...");
-    try nvctl.utils.print.line("💡 Using fallback dashboard for now");
+    var overclocking = nvctl.ghostnv_integration.OverclockingController.init(allocator, &gpu_controller, &monitoring);
+    defer overclocking.deinit();
     
-    // Launch fallback for demonstration
-    try launchSimpleDashboard(allocator);
+    var display = nvctl.ghostnv_integration.DisplayController.init(allocator, &gpu_controller);
+    defer display.deinit();
+    
+    var ai_upscaling = nvctl.ghostnv_integration.AIUpscalingController.init(allocator, &gpu_controller, &monitoring);
+    defer ai_upscaling.deinit();
+    
+    var vrr = nvctl.ghostnv_integration.VRRManager.init(allocator, &gpu_controller, &display, &monitoring);
+    defer vrr.deinit();
+    
+    var memory_manager = nvctl.ghostnv_integration.MemoryManager.init(allocator, &gpu_controller);
+    defer memory_manager.deinit();
+    
+    // Create and launch the enhanced TUI
+    var tui = try enhanced_tui.EnhancedTUI.init(
+        allocator,
+        &gpu_controller,
+        &monitoring,
+        &thermal,
+        &overclocking,
+        &display,
+        &ai_upscaling,
+        &vrr,
+        &memory_manager,
+    );
+    defer tui.deinit();
+    
+    // Launch the TUI application
+    try tui.launch();
 }
 
 /// Simple terminal dashboard as fallback

@@ -72,10 +72,6 @@ fn showVrrStatus(allocator: std.mem.Allocator) !void {
     
     const displays = display_controller.listDisplays() catch |err| switch (err) {
         error.OutOfMemory => return err,
-        else => {
-            try nvctl.utils.print.line("❌ Unable to enumerate displays");
-            return;
-        },
     };
     defer {
         for (displays) |display| {

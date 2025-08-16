@@ -57,12 +57,6 @@ fn showDisplayInfo(allocator: std.mem.Allocator) !void {
     
     const displays = display_controller.listDisplays() catch |err| switch (err) {
         error.OutOfMemory => return err,
-        else => {
-            try nvctl.utils.print.line("❌ No displays found or unable to detect displays");
-            try nvctl.utils.print.line("");
-            try nvctl.utils.print.line("💡 Make sure your NVIDIA GPU is connected to displays");
-            return;
-        },
     };
     defer {
         for (displays) |display| {
@@ -103,10 +97,6 @@ fn listDisplays(allocator: std.mem.Allocator) !void {
     
     const displays = display_controller.listDisplays() catch |err| switch (err) {
         error.OutOfMemory => return err,
-        else => {
-            try nvctl.utils.print.line("❌ No displays detected");
-            return;
-        },
     };
     defer {
         for (displays) |display| {
@@ -224,10 +214,6 @@ fn getVibrance(allocator: std.mem.Allocator) !void {
     
     const displays = display_controller.listDisplays() catch |err| switch (err) {
         error.OutOfMemory => return err,
-        else => {
-            try nvctl.utils.print.line("❌ No displays found");
-            return;
-        },
     };
     defer {
         for (displays) |display| {
@@ -271,10 +257,6 @@ fn setVibranceAll(allocator: std.mem.Allocator, percentage: u32) !void {
     
     const displays = display_controller.listDisplays() catch |err| switch (err) {
         error.OutOfMemory => return err,
-        else => {
-            try nvctl.utils.print.line("❌ No displays found");
-            return;
-        },
     };
     defer {
         for (displays) |display| {
@@ -404,10 +386,6 @@ fn showHdrStatus(allocator: std.mem.Allocator) !void {
     
     const displays = display_controller.listDisplays() catch |err| switch (err) {
         error.OutOfMemory => return err,
-        else => {
-            try nvctl.utils.print.line("❌ No displays found");
-            return;
-        },
     };
     defer {
         for (displays) |display| {
